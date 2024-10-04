@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os/exec"
+	"time"
 
 	"github.com/fsnotify/fsnotify"
 )
@@ -60,8 +61,15 @@ func findDirectories(fsys fs.FS, excludes Set) ([]string, error) {
 }
 
 func runWatcher(config Config, w *fsnotify.Watcher) error {
+	throttled := false
+	wait := 200 * time.Millisecond
+	t := time.NewTimer(wait)
+	defer t.Stop()
+
 	for {
 		select {
+		case <-t.C:
+			throttled = false
 		case err, ok := <-w.Errors:
 			if !ok {
 				fmt.Println("Error channel closed unexpectedly")
@@ -72,7 +80,12 @@ func runWatcher(config Config, w *fsnotify.Watcher) error {
 			if !ok {
 				return errors.New("Event channel closed unexpectedly")
 			}
+			if throttled {
+				break
+			}
 			handleEvent(config, e)
+			throttled = true
+			t.Reset(wait)
 		}
 	}
 }
