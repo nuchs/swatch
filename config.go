@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"io"
 	"strings"
 )
 
@@ -37,19 +38,21 @@ type Config struct {
 	Excludes Set
 	Cmd      string
 	Args     []string
+	Out      io.Writer
 }
 
-func newConfig() Config {
+func newConfig(out io.Writer) Config {
 	return Config{
 		".",
 		NewSet(".git", "node_modules"),
 		"",
 		make([]string, 0),
+		out,
 	}
 }
 
-func LoadConfig(cmdline []string) (Config, error) {
-	config := newConfig()
+func LoadConfig(cmdline []string, out io.Writer) (Config, error) {
+	config := newConfig(out)
 	numArgs := len(cmdline)
 
 processLoop:

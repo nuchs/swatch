@@ -2,18 +2,19 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 )
 
 func main() {
-	if err := run(os.Args[1:]); err != nil {
+	if err := run(os.Args[1:], os.Stdout); err != nil {
 		usage(err)
 		os.Exit(1)
 	}
 }
 
-func run(cmdline []string) error {
-	config, err := LoadConfig(cmdline)
+func run(cmdline []string, out io.Writer) error {
+	config, err := LoadConfig(cmdline, out)
 	if err != nil {
 		return fmt.Errorf("Failed to load config: %w", err)
 	}

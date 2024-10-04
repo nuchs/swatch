@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"os/exec"
 
 	"github.com/fsnotify/fsnotify"
 )
@@ -45,6 +46,7 @@ func findDirectories(fsys fs.FS, excludes Set) ([]string, error) {
 		}
 
 		if d.IsDir() {
+			fmt.Printf("Watching %s\n", path)
 			dirs = append(dirs, path)
 		}
 		return nil
@@ -76,9 +78,17 @@ func runWatcher(config Config, w *fsnotify.Watcher) error {
 }
 
 func handleEvent(config Config, e fsnotify.Event) {
-	if e.Op&fsnotify.Chmod != 0 {
+	if e.Op&fsnotify.Chmod != 0 || e.Op&fsnotify.Rename != 0 {
 		return
 	}
 
+	fmt.Println("-----------------------------")
 	fmt.Println(e)
+	fmt.Println()
+
+	cmd := exec.Command(config.Cmd, config.Args...)
+	cmd.Stdout = config.Out
+	if err := cmd.Run(); err != nil {
+		fmt.Println("An error occurred:", err)
+	}
 }
