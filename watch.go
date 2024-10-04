@@ -78,7 +78,7 @@ func runWatcher(config Config, w *fsnotify.Watcher) error {
 }
 
 func handleEvent(config Config, e fsnotify.Event) {
-	if e.Op&fsnotify.Chmod != 0 || e.Op&fsnotify.Rename != 0 {
+	if e.Op.Has(fsnotify.Chmod) || e.Op.Has(fsnotify.Rename) {
 		return
 	}
 
@@ -86,9 +86,24 @@ func handleEvent(config Config, e fsnotify.Event) {
 	fmt.Println(e)
 	fmt.Println()
 
-	cmd := exec.Command(config.Cmd, config.Args...)
+	args := makeArgs(e.Name, config.Args)
+	cmd := exec.Command(config.Cmd, args...)
 	cmd.Stdout = config.Out
 	if err := cmd.Run(); err != nil {
 		fmt.Println("An error occurred:", err)
 	}
+}
+
+func makeArgs(sub string, template []string) []string {
+	args := make([]string, len(template))
+
+	for i, v := range template {
+		if v == "{}" {
+			args[i] = sub
+		} else {
+			args[i] = template[i]
+		}
+	}
+
+	return args
 }
