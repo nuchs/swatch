@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/fs"
 	"os"
 )
 
@@ -16,13 +15,13 @@ func main() {
 func run(cmdline []string) error {
 	config, err := LoadConfig(cmdline)
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to load config: %w", err)
 	}
 
 	fsys := os.DirFS(config.Dir)
-	dirs := findDirectories(fsys, config.Excludes)
-
-	watch(config, dirs)
+	if err := Watch(config, fsys); err != nil {
+		return fmt.Errorf("Failed to watch directories: %w", err)
+	}
 
 	return nil
 }
@@ -46,30 +45,4 @@ options:
                       the options.
     args              Arguments passed to command
   `)
-}
-
-func watch(config Config, dirs []string) {
-
-}
-
-func findDirectories(fsys fs.FS, excludes Set) []string {
-	var dirs []string
-
-	fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			fmt.Printf("%s will not be watched: %v\n", path, err)
-			return nil
-		}
-		if excludes.Contains(path) {
-			fmt.Printf("Skipping %s\n", path)
-			return fs.SkipDir
-		}
-
-		if d.IsDir() {
-			dirs = append(dirs, path)
-		}
-		return nil
-	})
-
-	return dirs
 }
