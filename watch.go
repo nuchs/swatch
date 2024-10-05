@@ -83,8 +83,8 @@ func runWatcher(config Config, w *fsnotify.Watcher) error {
 			if throttled {
 				break
 			}
-			handleEvent(config, e)
 			throttled = true
+			handleEvent(config, e)
 			t.Reset(wait)
 		}
 	}
