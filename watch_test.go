@@ -39,21 +39,34 @@ func TestArgumentSubstitution(t *testing.T) {
 }
 
 func TestFindDirs(t *testing.T) {
-
 	testCases := []struct {
-		desc string
-		fsys fstest.MapFS
-		want []string
+		desc     string
+		fsys     fstest.MapFS
+		excludes Set
+		want     []string
 	}{
 		{
-			desc: "Flat dir",
-			fsys: makeFs(),
-			want: []string{"."},
+			desc:     "Flat dir",
+			fsys:     makeFs(),
+			excludes: NewSet(),
+			want:     []string{"."},
+		},
+		{
+			desc:     "Multiple dir, no files",
+			fsys:     makeFs("dir1/file1", "dir1/file2", "dir2/file3", "dir2/dir21/file4"),
+			excludes: NewSet(),
+			want:     []string{".", "dir1", "dir2", "dir2/dir21"},
+		},
+		{
+			desc:     "Excludes",
+			fsys:     makeFs("dir1/file1", "dir1/file2", "dir2/file3", "dir2/dir21/file4"),
+			excludes: NewSet("dir2", "dir333"),
+			want:     []string{".", "dir1"},
 		},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			got, err := findDirectories(tC.fsys, NewSet())
+			got, err := findDirectories(tC.fsys, tC.excludes)
 			if err != nil {
 				t.Fatalf("Error finding directories: %v", err)
 			}
