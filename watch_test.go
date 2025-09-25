@@ -66,7 +66,9 @@ func TestFindDirs(t *testing.T) {
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			got, err := findDirectories(tC.fsys, tC.excludes)
+			config := newConfig(nil)
+			config.Excludes = tC.excludes
+			got, err := findDirectories(tC.fsys, config)
 			if err != nil {
 				t.Fatalf("Error finding directories: %v", err)
 			}

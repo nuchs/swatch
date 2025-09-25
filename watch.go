@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"time"
@@ -12,7 +13,7 @@ import (
 )
 
 func Watch(config Config, fsys fs.FS) error {
-	dirs, err := findDirectories(fsys, config.Excludes)
+	dirs, err := findDirectories(fsys, config)
 	if err != nil {
 		return fmt.Errorf("Failed to find directories to watch: %w", err)
 	}
@@ -24,7 +25,9 @@ func Watch(config Config, fsys fs.FS) error {
 	defer w.Close()
 
 	for _, d := range dirs {
-		w.Add(d)
+		if err := w.Add(d); err != nil {
+			fmt.Fprintf(os.Stderr, "Falied to add %s: %s\n", d, err)
+		}
 	}
 
 	if err := runWatcher(config, w); err != nil {
@@ -34,7 +37,7 @@ func Watch(config Config, fsys fs.FS) error {
 	return nil
 }
 
-func findDirectories(fsys fs.FS, excludes Set) ([]string, error) {
+func findDirectories(fsys fs.FS, config Config) ([]string, error) {
 	var dirs []string
 
 	err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
@@ -42,12 +45,15 @@ func findDirectories(fsys fs.FS, excludes Set) ([]string, error) {
 			fmt.Printf("%s will not be watched: %v\n", path, err)
 			return nil
 		}
-		if excludes.Contains(path) {
+		if config.Excludes.Contains(path) {
 			fmt.Printf("Not watching %s\n", path)
 			return fs.SkipDir
 		}
 
 		if d.IsDir() {
+			if config.Dir != "" {
+				path = filepath.Join(config.Dir, path)
+			}
 			fmt.Printf("Watching %s\n", path)
 			dirs = append(dirs, path)
 		}
