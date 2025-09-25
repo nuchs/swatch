@@ -42,6 +42,8 @@ options:
     -e, --exclude     A comma separated list of directories to exclude from 
                       being watched. If no value is specified it will exclude 
                       the .git & node_modules directories.
+		-f, --filter			Only trigger when files matching the filter are changed. 
+											The filter accepts standard glob patterns
     command           The command to run when a file changes. Must come after 
                       the options.
     args              Arguments passed to command

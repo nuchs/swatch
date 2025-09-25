@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os/exec"
+	"path/filepath"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
@@ -93,6 +94,13 @@ func runWatcher(config Config, w *fsnotify.Watcher) error {
 func handleEvent(config Config, e fsnotify.Event) {
 	if e.Op.Has(fsnotify.Chmod) || e.Op.Has(fsnotify.Rename) {
 		return
+	}
+
+	if config.Filter != "" {
+		filename := filepath.Base(e.Name)
+		if match, err := filepath.Match(config.Filter, filename); err != nil || !match {
+			return
+		}
 	}
 
 	fmt.Println("-----------------------------")

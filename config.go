@@ -10,6 +10,7 @@ var (
 	ErrNoCommand      = errors.New("You must specify a command")
 	ErrMissingDir     = errors.New("You must provide an argument to -d")
 	ErrMissingExclude = errors.New("You must provide an argument to -e")
+	ErrMissingFilter  = errors.New("You must provide an argument to -f")
 )
 
 type Set struct {
@@ -39,6 +40,7 @@ type Config struct {
 	Cmd      string
 	Args     []string
 	Out      io.Writer
+	Filter   string
 }
 
 func newConfig(out io.Writer) Config {
@@ -48,6 +50,7 @@ func newConfig(out io.Writer) Config {
 		"",
 		make([]string, 0),
 		out,
+		"",
 	}
 }
 
@@ -73,6 +76,13 @@ processLoop:
 			for _, exclusion := range strings.Split(cmdline[i], ",") {
 				config.Excludes.Add(strings.TrimPrefix(exclusion, "./"))
 			}
+
+		case "-f", "--filter":
+			i++
+			if i >= numArgs {
+				return config, ErrMissingFilter
+			}
+			config.Filter = cmdline[i]
 
 		default:
 			config.Cmd = cmdline[i]

@@ -14,47 +14,57 @@ func TestLoadConfig(t *testing.T) {
 		{
 			desc:    "command only",
 			cmdline: []string{"ls"},
-			want:    Config{".", NewSet(".git", "node_modules"), "ls", []string{}, nil},
+			want:    Config{".", NewSet(".git", "node_modules"), "ls", []string{}, nil, ""},
 		},
 		{
 			desc:    "command with args",
 			cmdline: []string{"ls", "-l", "-h"},
-			want:    Config{".", NewSet(".git", "node_modules"), "ls", []string{"-l", "-h"}, nil},
+			want:    Config{".", NewSet(".git", "node_modules"), "ls", []string{"-l", "-h"}, nil, ""},
 		},
 		{
 			desc:    "-d",
 			cmdline: []string{"-d", "/home", "ls"},
-			want:    Config{"/home", NewSet(".git", "node_modules"), "ls", []string{}, nil},
+			want:    Config{"/home", NewSet(".git", "node_modules"), "ls", []string{}, nil, ""},
 		},
 		{
 			desc:    "-directory",
 			cmdline: []string{"--directory", "/home", "ls"},
-			want:    Config{"/home", NewSet(".git", "node_modules"), "ls", []string{}, nil},
+			want:    Config{"/home", NewSet(".git", "node_modules"), "ls", []string{}, nil, ""},
 		},
 		{
 			desc:    "-e single exclude",
 			cmdline: []string{"-e", "a", "ls"},
-			want:    Config{".", NewSet(".git", "node_modules", "a"), "ls", []string{}, nil},
+			want:    Config{".", NewSet(".git", "node_modules", "a"), "ls", []string{}, nil, ""},
 		},
 		{
 			desc:    "-e multiple excludes",
 			cmdline: []string{"-e", "a,.b,./c", "ls"},
-			want:    Config{".", NewSet(".git", "node_modules", "a", ".b", "c"), "ls", []string{}, nil},
+			want:    Config{".", NewSet(".git", "node_modules", "a", ".b", "c"), "ls", []string{}, nil, ""},
 		},
 		{
 			desc:    "--exclude single exclude",
 			cmdline: []string{"--exclude", "a", "ls"},
-			want:    Config{".", NewSet(".git", "node_modules", "a"), "ls", []string{}, nil},
+			want:    Config{".", NewSet(".git", "node_modules", "a"), "ls", []string{}, nil, ""},
 		},
 		{
 			desc:    "--exclude multiple excludes",
 			cmdline: []string{"--exclude", "a,.b,./c", "ls"},
-			want:    Config{".", NewSet(".git", "node_modules", "a", ".b", "c"), "ls", []string{}, nil},
+			want:    Config{".", NewSet(".git", "node_modules", "a", ".b", "c"), "ls", []string{}, nil, ""},
+		},
+		{
+			desc:    "-f",
+			cmdline: []string{"-f", "*.proto", "ls"},
+			want:    Config{".", NewSet(".git", "node_modules"), "ls", []string{}, nil, "*.proto"},
+		},
+		{
+			desc:    "--filter",
+			cmdline: []string{"-f", "*.proto", "ls"},
+			want:    Config{".", NewSet(".git", "node_modules"), "ls", []string{}, nil, "*.proto"},
 		},
 		{
 			desc:    "All options",
-			cmdline: []string{"-d", "/a", "-e", "b,c", "ls", "-l", "-r"},
-			want:    Config{"/a", NewSet(".git", "node_modules", "b", "c"), "ls", []string{"-l", "-r"}, nil},
+			cmdline: []string{"-d", "/a", "-e", "b,c", "-f", "*.txt", "ls", "-l", "-r"},
+			want:    Config{"/a", NewSet(".git", "node_modules", "b", "c"), "ls", []string{"-l", "-r"}, nil, "*.txt"},
 		},
 	}
 
@@ -82,6 +92,16 @@ func TestBadConfig(t *testing.T) {
 			desc:    "No command",
 			cmdline: []string{},
 			want:    ErrNoCommand,
+		},
+		{
+			desc:    "No argument to -f",
+			cmdline: []string{"-f"},
+			want:    ErrMissingFilter,
+		},
+		{
+			desc:    "No argument to --filter",
+			cmdline: []string{"--filter"},
+			want:    ErrMissingFilter,
 		},
 		{
 			desc:    "No argument to -e",
